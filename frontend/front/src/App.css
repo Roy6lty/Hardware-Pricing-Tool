@@ -1,0 +1,76 @@
+/* /home/olowoleru/projects/Inventory_tool/inventory_frontend/front/src/App.css */
+
+/* Import Open Sans from Google Fonts (if you want to use it and it's not locally installed) */
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap");
+
+body {
+  margin: 0;
+  font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
+    "Helvetica Neue", sans-serif; /* Default body font */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #333; /* A common default text color */
+  line-height: 1.6; /* Improves readability */
+}
+
+/* Headings: h1, h2, h3, h4, h5, h6 */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; /* Heading font stack */
+  font-weight: 700; /* Common bold weight for headings */
+  color: #2c3e50; /* A slightly darker color for headings often looks good */
+  margin-top: 1.5em; /* Default spacing for headings */
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+/* You can be more specific if needed */
+h1 {
+  font-size: 2.5rem; /* Example size */
+}
+
+h2 {
+  font-size: 2rem; /* Example size */
+}
+
+h3 {
+  font-size: 1.75rem; /* Example size */
+}
+
+h4 {
+  font-size: 1.5rem; /* Example size */
+}
+
+/* Ensure buttons and inputs also inherit or have appropriate fonts */
+button,
+input,
+select,
+textarea {
+  font-family: inherit; /* Inherits from body or a more specific rule */
+  font-size: 1rem;
+}
+
+/* Specific components might override these, which is fine.
+   For example, your SearchBar.css already sets font sizes for its elements.
+   This global setting provides a good baseline. */
+
+/*
+  You might have other global styles here.
+  The :root variables from your SearchBar.css are excellent for consistency
+  but are scoped to where they are defined. If you want them truly global,
+  defining them here in App.css or an index.css would be the place.
+*/
+
+/* Example of making some of your SearchBar.css variables global if desired: */
+/*
+:root {
+  --primary-color: #007bff;
+  --text-color-default: #333;
+  --border-radius-medium: 6px;
+}
+*/

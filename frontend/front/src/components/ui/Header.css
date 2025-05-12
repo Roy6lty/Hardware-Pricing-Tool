@@ -1,0 +1,38 @@
+/* src/components/ui/header.css */
+.app-navbar {
+  position: fixed; /* Snap to the top and stay there */
+  top: 0;
+  left: 0;
+  width: 100%; /* Span the full width of the viewport */
+  background-color: #f8f9fa; /* Example background color, adjust as needed */
+  padding: 20px; /* 10px padding on all sides */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: adds a subtle shadow for depth */
+  z-index: 1000; /* Ensure it stays on top of other page content */
+  box-sizing: border-box; /* Ensures padding and border don't add to the total width/height */
+
+  /* --- MODIFIED/ADDED --- */
+  height: 120px; /* Increased height (approx. current ~48-49px + 20px) */
+
+  /* Flexbox for aligning content within the navbar */
+  display: flex;
+  /* --- MODIFIED --- */
+  justify-content: flex-start; /* Aligns child items (the h1) to the left */
+  align-items: center; /* Vertically centers items within the new height */
+}
+
+.app-navbar h1 {
+  margin: 0; /* Remove default browser margins from h1 */
+  font-size: 2.2em; /* Adjust font size as desired */
+  padding-left: 40px;
+  color: #03297a;
+  font-weight: 700;
+  /* The text itself will be contained within the h1, which is now aligned to the left by flexbox. */
+}
+
+.secondary-header {
+  margin: 0; /* Remove default browser margins from h1 */
+  padding-left: 40px;
+  font-size: 1em; /* Adjust font size as desired */
+  color: #626263;
+  font-weight: 400;
+}

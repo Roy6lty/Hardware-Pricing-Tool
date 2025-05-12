@@ -1,0 +1,486 @@
+/* /home/olowoleru/projects/Inventory_tool/inventory_frontend/front/src/components/ui/SearchBar.css */
+
+:root {
+  /* Define color palette */
+  --primary-color: #007bff;
+  --primary-color-dark: #0056b3;
+  --primary-color-darker: #004085;
+  --primary-color-light-hover: #e6f2ff; /* For non-active button hover */
+
+  --text-color-on-primary: #ffffff;
+  --text-color-primary-context: var(
+    --primary-color
+  ); /* Text color for elements related to primary, like slider button text */
+  --text-color-default: #333;
+  --text-color-subtle: #555; /* Used for less prominent text like greyed out fields */
+  --text-color-disabled: #6c757d;
+  --text-color-header: #2c3e50; /* For table headers and summary title */
+
+  --border-color-light: #ddd;
+  --border-color-medium: #ccc;
+  --border-color-strong: #bbb; /* For table borders */
+
+  --background-color-main: #f9f9f9; /* General page/component background */
+  --background-color-input: #ffffff;
+  --background-color-disabled: #e9ecef;
+  --background-color-table-header: #f0f2f5; /* Light grey for table headers */
+  --background-color-table-row-even: #f8f9fa; /* Slightly off-white for even rows */
+  --background-color-table-row-hover: #e9eff5; /* Hover for table rows */
+  --background-color-summary: #eef4f8; /* Background for the summary section */
+
+  /* Define common values */
+  --border-radius-small: 4px;
+  --border-radius-medium: 6px;
+  --border-radius-large: 8px;
+  --input-height: 40px;
+  --focus-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  --box-shadow-soft: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --box-shadow-table: 0 1px 3px rgba(0, 0, 0, 0.08); /* Softer shadow for table */
+
+  --search-controls-max-width: 600px;
+  /* --- ADDED for table/results section --- */
+  --search-results-max-width: 900px; /* Max width for the results table and summary */
+}
+
+.search-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+  padding: 0 20px;
+  margin-top: 200px;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+/* --- Search Mode Slider Styles --- */
+.search-mode-slider {
+  display: flex;
+  border: 1px solid var(--primary-color);
+  border-radius: var(--border-radius-medium);
+  overflow: hidden;
+  width: 100%;
+  max-width: var(--search-controls-max-width);
+  box-sizing: border-box;
+}
+
+.mode-option-button {
+  flex: 1;
+  padding: 10px 15px;
+  text-align: center;
+  background-color: var(--background-color-input);
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-color-primary-context);
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+.mode-option-button:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+.mode-option-button:first-child {
+  border-top-left-radius: var(--border-radius-small);
+  border-bottom-left-radius: var(--border-radius-small);
+}
+.mode-option-button:last-child {
+  border-top-right-radius: var(--border-radius-small);
+  border-bottom-right-radius: var(--border-radius-small);
+}
+
+.mode-option-button.active {
+  background-color: var(--primary-color);
+  color: var(--text-color-on-primary);
+  font-weight: 600;
+}
+
+.mode-option-button:not(.active):hover {
+  background-color: var(--primary-color-light-hover);
+}
+/* --- End Search Mode Slider --- */
+
+.search-input-group {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: var(--search-controls-max-width);
+  box-sizing: border-box;
+}
+
+.search-input {
+  flex-grow: 1;
+  padding: 10px 15px;
+  font-size: 16px;
+  border: 1px solid var(--border-color-light);
+  border-radius: var(--border-radius-small) 0 0 var(--border-radius-small);
+  margin-right: 0;
+  outline: none;
+  box-sizing: border-box;
+  height: var(--input-height);
+  background-color: var(--background-color-input);
+  color: var(--text-color-default);
+}
+
+.search-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: var(--focus-shadow);
+}
+
+.search-button {
+  padding: 0 20px;
+  height: var(--input-height);
+  font-size: 16px;
+  color: var(--text-color-on-primary);
+  background-color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  border-left: none;
+  border-radius: 0 var(--border-radius-small) var(--border-radius-small) 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+  box-sizing: border-box;
+}
+
+.search-button:hover {
+  background-color: var(--primary-color-dark);
+  border-color: var(--primary-color-dark);
+}
+
+.search-button:active {
+  background-color: var(--primary-color-darker);
+  border-color: var(--primary-color-darker);
+}
+
+.search-button:focus-visible {
+  outline: 2px solid var(--primary-color-dark);
+  outline-offset: 2px;
+  box-shadow: var(--focus-shadow);
+}
+
+.filter-dropdown-group {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: var(--search-controls-max-width);
+  box-sizing: border-box;
+}
+
+.filter-dropdown {
+  flex-grow: 1;
+  padding: 0 12px;
+  height: var(--input-height);
+  font-size: 16px;
+  border: 1px solid var(--border-color-light);
+  border-radius: var(--border-radius-small);
+  background-color: var(--background-color-input);
+  color: var(--text-color-default);
+  cursor: pointer;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236c757d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 10px;
+  padding-right: 30px;
+}
+
+.filter-dropdown:disabled {
+  background-color: var(--background-color-disabled);
+  cursor: not-allowed;
+  color: var(--text-color-disabled);
+  border-color: var(--border-color-light);
+}
+
+.filter-dropdown:focus {
+  border-color: var(--primary-color);
+  box-shadow: var(--focus-shadow);
+  outline: none;
+}
+
+/* --- MODIFIED/NEW STYLES FOR RESULTS SECTION, SUMMARY, AND TABLE --- */
+
+/* Container for both summary and table, allows for a wider max-width */
+.search-results-section {
+  width: 100%;
+  max-width: var(--search-results-max-width); /* Wider than search controls */
+  margin-top: 25px;
+  padding: 20px; /* Add some padding around the content */
+  background-color: var(
+    --background-color-input
+  ); /* White background for this section */
+  border-radius: var(--border-radius-large);
+  /* box-shadow: var(--box-shadow-soft); */ /* Removed as per previous request */
+  box-sizing: border-box;
+}
+
+.search-summary {
+  margin-bottom: 25px; /* Space between summary and table */
+  padding: 15px 20px;
+  background-color: var(--background-color-summary);
+  border: 1px solid var(--border-color-light);
+  border-radius: var(--border-radius-medium);
+  text-align: left; /* MODIFIED: Align all text within summary to the left */
+}
+
+.search-summary h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: var(--text-color-header);
+  font-size: 1.2em; /* Slightly larger for section title */
+  font-weight: 600;
+  /* text-align: left; */ /* Ensured by parent .search-summary */
+}
+
+.search-summary p {
+  margin: 8px 0; /* Consistent spacing for summary items */
+  font-size: 0.95em;
+  /* color: var(--text-color-subtle); */ /* MODIFIED: Default color will be handled by strong/span */
+  line-height: 1.5;
+  /* text-align: left; */ /* Ensured by parent .search-summary */
+}
+
+/* Style for the <strong> (label part) of each summary item */
+.search-summary p strong {
+  /* color: var(--text-color-default); */ /* MODIFIED: Default color will be handled by specific classes */
+  font-weight: 500; /* Medium weight for labels */
+  margin-right: 8px; /* Space between label and value */
+}
+
+/* --- ADDED: Specific styling for summary fields --- */
+.search-summary-query strong,
+.search-summary-query .summary-value {
+  color: var(--text-color-default); /* Default dark color for query */
+}
+.search-summary-query strong {
+  font-weight: 700; /* Bolder for Query label */
+}
+.search-summary-query .summary-value {
+  font-weight: 600; /* Slightly bolder for Query value */
+}
+
+.search-summary-country strong,
+.search-summary-country .summary-value,
+.search-summary-region strong,
+.search-summary-region .summary-value {
+  color: var(--text-color-subtle); /* Grey color for Country and Region */
+}
+/* --- End Added --- */
+
+/* Container for the "Search Results" heading and the table */
+.search-results-table-container {
+  margin-top: 15px; /* If there's a heading above the table */
+}
+
+.search-results-table-container h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: var(--text-color-header);
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+/* Wrapper for horizontal scrolling on smaller screens */
+.table-responsive-wrapper {
+  width: 100%;
+  overflow-x: auto; /* Enables horizontal scroll if table is wider than container */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on touch devices */
+  /* border: 1px solid var(--border-color-strong); */ /* MODIFIED: Removed border */
+  border-radius: var(--border-radius-medium);
+  box-shadow: var(--box-shadow-table);
+}
+
+.results-table {
+  width: 100%;
+  min-width: 600px; /* Adjust as needed based on your columns */
+  border-collapse: collapse; /* Ensures borders are neat */
+  font-size: 0.9em;
+  /* background-color: var(--background-color-input); Removed, as wrapper has bg */
+}
+
+.results-table th,
+.results-table td {
+  /* border: 1px solid var(--border-color-light); */ /* MODIFIED: Removed cell borders */
+  padding: 10px 14px;
+  text-align: left;
+  vertical-align: middle;
+  color: var(--text-color-default);
+  /* Add a bottom border for row separation if desired, now that cell borders are gone */
+  border-bottom: 1px solid var(--border-color-light);
+}
+
+.results-table th {
+  background-color: var(--background-color-table-header);
+  font-weight: 600;
+  color: var(--text-color-header); /* Darker text for headers */
+  position: sticky; /* Optional: make headers sticky when scrolling vertically */
+  top: 0; /* Required for sticky header if .table-responsive-wrapper is the scroll container */
+  z-index: 1; /* Ensure header is above table content during scroll */
+  /* border-bottom: 2px solid var(--border-color-strong); */ /* MODIFIED: Adjusted to match td or remove if no header bottom line desired */
+  /* If you want a line under the header but not other rows, keep this or adjust: */
+  border-bottom: 2px solid var(--border-color-medium); /* Or var(--border-color-strong) for more emphasis */
+}
+
+/* Remove bottom border from the last row's cells to avoid double border with container or just for cleaner look */
+.results-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.results-table tbody tr:nth-child(even) {
+  background-color: var(--background-color-table-row-even);
+}
+
+.results-table tbody tr:hover {
+  background-color: var(--background-color-table-row-hover);
+}
+
+/* Fallback for .results-list if it's ever used directly (non-table) */
+.results-list {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+  max-width: var(
+    --search-controls-max-width
+  ); /* Kept for consistency if used */
+}
+
+.result-item {
+  /* Styles for individual non-table items */
+  border: 1px solid var(--border-color-light);
+  padding: 15px;
+  border-radius: var(--border-radius-small);
+  background-color: var(--background-color-main);
+}
+
+.result-item h3 {
+  margin-top: 0;
+  color: var(--text-color-default);
+  font-size: 1.1em;
+}
+
+.result-item p {
+  margin: 5px 0;
+  font-size: 0.9em;
+  color: var(--text-color-subtle);
+}
+
+.result-item p strong {
+  color: var(--text-color-default);
+  font-weight: 600;
+}
+/* --- End Results List --- */
+
+/* --- Search Feedback Messages --- */
+.search-feedback {
+  margin-top: 15px;
+  padding: 10px 15px;
+  border-radius: var(--border-radius-small);
+  text-align: center;
+  font-size: 0.95em;
+  width: 100%;
+  max-width: var(--search-controls-max-width);
+  box-sizing: border-box;
+}
+
+.loading-message {
+  color: var(--primary-color-dark);
+  background-color: #eaf2f8; /* Consider a variable */
+  border: 1px solid #c5d9e8; /* Consider a variable */
+}
+
+.error-message {
+  color: #c0392b; /* Consider a variable */
+  background-color: #fbeae5; /* Consider a variable */
+  border: 1px solid #f5c6cb; /* Consider a variable */
+}
+
+.summary-icon {
+  margin-right: 0.4em;
+  font-size: 1em; /* Adjust size if needed */
+  vertical-align: middle; /* Helps align with text */
+}
+
+.search-input::placeholder {
+  color: #a0a0a0; /* A slightly different shade of grey */
+  opacity: 1; /* Ensure it's fully opaque if needed */
+}
+
+/* .results-table th:nth-child(2), /* Assuming part_number is the second column */
+/* .results-table td:nth-child(2) { */
+/* width: 250px; Adjust as needed */
+/* font-size: 1.1em; Adjust as needed */
+/* } */
+
+/* /home/olowoleru/projects/Inventory_tool/inventory_frontend/front/src/components/ui/SearchBar.css */
+
+/* ... existing styles ... */
+
+/* --- ADDED: Styles for the Product Details Summary (Model Search) --- */
+.product-details-summary {
+  margin-bottom: 25px; /* Space between details and table/summary */
+  padding: 15px 20px;
+  background-color: var(
+    --background-color-summary
+  ); /* Same background as search summary */
+  border: 1px solid var(--border-color-light);
+  border-radius: var(--border-radius-medium);
+  text-align: left;
+}
+
+.product-details-summary h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: var(--text-color-header);
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.product-details-summary p {
+  margin: 8px 0;
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+
+.product-details-summary p strong {
+  font-weight: bold; /* Make the labels bold */
+  margin-right: 8px;
+  color: var(--text-color-default); /* Ensure label text is default color */
+}
+/* --- End Added --- */
+
+/* ... existing styles for .search-results-section, .search-summary, etc. ... */
+
+.results-table th,
+.results-table td {
+  /* ... existing padding, text-align, etc. ... */
+  padding: 10px 20px; /* Keep increased padding */
+  text-align: left;
+  vertical-align: middle;
+  color: var(--text-color-default);
+  border-bottom: 1px solid var(--border-color-light);
+}
+
+/* --- REMOVED: Generic bolding for the first column --- */
+/* If you had this rule, remove it as we are using inline styles for Part Number */
+/*
+.results-table th:first-child,
+.results-table td:first-child {
+  font-weight: bold;
+}
+*/
+/* --- End REMOVED --- */
+
+/* ... rest of your CSS ... */
+
+/* Keep the rule for the second column (Description) if needed */
+.results-table th:nth-child(2),
+.results-table td:nth-child(2) {
+  width: 250px; /* Adjust as needed */
+  font-size: 1.1em; /* Adjust as needed */
+}
