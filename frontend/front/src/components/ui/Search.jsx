@@ -156,7 +156,7 @@ const SearchBar = () => {
       return;
     }
     setSelectedModelItems([]); // Clear selected items for model search
-    const endpoint = `http://127.0.0.1:8005/part-number?query=${encodeURIComponent(
+    const endpoint = `http://134.209.22.147/:8005/part-number?query=${encodeURIComponent(
       trimmedQuery
     )}&country=${encodeURIComponent(
       currentCountry || ""
@@ -178,7 +178,7 @@ const SearchBar = () => {
       return;
     }
     setSelectedModelItems([]); // Clear selected items for model search
-    const endpoint = `http://127.0.0.1:8005/model?query=${encodeURIComponent(
+    const endpoint = `http://134.209.22.147/:8005/model?query=${encodeURIComponent(
       trimmedQuery
     )}&country=${encodeURIComponent(
       currentCountry || ""
@@ -261,7 +261,7 @@ const SearchBar = () => {
     setError(null);
 
     try {
-      const endpoint = "http://127.0.0.1:8005/part-number/multiple";
+      const endpoint = "http://134.209.22.147/:8005/part-number/multiple";
       const postData = {
         part_numbers: selectedModelItems.map((item) => item.part_number),
         country: selectedCountry || "",
