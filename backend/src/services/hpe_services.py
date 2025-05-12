@@ -301,7 +301,7 @@ async def search_parts_broker_bin(
 async def multiple_parts_broker_bin_search(
     parts_list: list,
     country: str | None,
-    login_username: str = settings.USER,
+    login_username: str = settings.BROKERUSER,
     authorization: str = settings.AUTHORIZATION,
 ):
     query_params = []

@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     TWO_FACTOR_AUTHENTICATION_EMAIL_TIME: int
 
     # BROKERBIN
-    USER: str
+    BROKERUSER: str
     AUTHORIZATION: str
 
     # cloudinary

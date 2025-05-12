@@ -69,7 +69,7 @@ async def get_broker_part(
     res = await search_parts_broker_bin(
         query=broker_query,
         authorization=f"Bearer {settings.AUTHORIZATION}",
-        login_username=f"{settings.USER}",
+        login_username=f"{settings.BROKERUSER}",
     )
     final = []
     for part in res.data:
