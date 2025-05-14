@@ -18,13 +18,13 @@ class InventoryPart(AbstractBaseModel):
 
     query: str
     # Change list to Tuple and [] to () or Field(default_factory=tuple)
-    mfg: Tuple[str, ...] = Field(default_factory=tuple)
-    cond: Tuple[str, ...] = Field(default_factory=tuple)
-    country: Tuple[str, ...] = Field(default_factory=tuple)
-    region: Tuple[str, ...] = Field(default_factory=tuple)
-    state: Tuple[str, ...] = Field(default_factory=tuple)
-    size: int = 10
-    offset: int = 100
+    mfg: tuple | None = None
+    cond: tuple | None = None
+    country: tuple | None = None
+    region: tuple | None = None
+    state: tuple | None = None
+    size: int = 100
+    offset: int = 0
     # fuzziness:str = 100 # Ensure all fields are hashable if uncommented
     # priced: int
     # age: int
@@ -116,8 +116,17 @@ class HPEProductsDescription(AbstractBaseModel):
 class PartNumbersMultiple(AbstractBaseModel):
     model_config = ConfigDict(frozen=True)
     part_numbers: Tuple[str, ...]
-    country: str | None
-    region: str | None
+    countries: list | tuple | None
+    regions: list | tuple | None
+
+    @field_validator("part_numbers", "countries", mode="before")
+    def convert_to_tuple(cls, value):
+        if isinstance(value, list):
+            if len(value) > 0:
+                return tuple(value)
+            else:
+                return None
+        return value
 
 
 class ModelSearchResponse(AbstractBaseModel):

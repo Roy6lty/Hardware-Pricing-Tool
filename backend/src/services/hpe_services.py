@@ -1,14 +1,10 @@
 import asyncio
 
-# from functools import lru_cache
 from async_lru import alru_cache
-import time
 from bs4 import BeautifulSoup
 from fastapi import HTTPException
 import httpx
 import logging
-from numpy import append
-from pydantic import BaseModel
 from icecream import ic
 from backend.src.models.inventory_model import (
     BrokerBinServerResponse,
@@ -174,7 +170,7 @@ def parse_specific_rtf_table(html_content: str):
     return product_info, product_components
 
 
-# @alru_cache(maxsize=128)
+@alru_cache(maxsize=128)
 async def get_hpe_part_info(part_id: str, max_retries: int = 5):
     """
     Function to fetch HPE part information (adapted for direct calling).
@@ -187,7 +183,7 @@ async def get_hpe_part_info(part_id: str, max_retries: int = 5):
     counter = 0
     response = None
     while counter < MAX_RETRIES:
-        ic(counter)
+        ic(f"Retrying... attempt {counter + 1}/{MAX_RETRIES}")
         try:
             async with httpx.AsyncClient(timeout=20.0) as client:
                 response = await client.get(search_url)
@@ -220,6 +216,7 @@ async def get_hpe_part_info(part_id: str, max_retries: int = 5):
                     detail=f"HPE PartSurfer returned an error: Status {exc.response.status_code}",
                 )
             counter += 1
+            await asyncio.sleep(0.5)
 
     logger.info(f"Successfully fetched HTML for part ID: {part_id}")
 
@@ -255,7 +252,16 @@ async def search_parts_broker_bin(
 ):
     host = "https://search.brokerbin.com"
     search_url: str = f"{host}/api/v2/part/search"
-    params = query.model_dump(exclude_unset=True)
+    params = {
+        "query": query.query,
+        "mfg[]": list(query.mfg) if query.mfg else None,
+        "cond[]": list(query.cond) if query.cond else None,
+        "country[]": list(query.country) if query.country else None,
+        "region[]": list(query.region) if query.region else None,
+        "state[]": list(query.state) if query.state else None,
+        "size": 100,
+    }
+    filtered_params = {key: value for key, value in params.items() if value is not None}
     headers = {
         "Authorization": f"Bearer {authorization}",
         "login": login_username,
@@ -267,8 +273,15 @@ async def search_parts_broker_bin(
     while counter < MAX_RETRIES:
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
-                logger.info(f"Requesting URL: {search_url} with params: {params}")
-                response = await client.get(search_url, params=params, headers=headers)
+                logger.info(
+                    f"Requesting URL: {search_url} with params: {filtered_params}"
+                )
+                request = client.build_request(
+                    "GET", search_url, params=filtered_params, headers=headers
+                )
+                response = await client.get(
+                    search_url, params=filtered_params, headers=headers
+                )
                 response.raise_for_status()
                 data = response.json()
                 break
@@ -288,7 +301,7 @@ async def search_parts_broker_bin(
                 raise exc
         counter += 1
         await asyncio.sleep(0.5 * (counter + 1))
-    ic(counter)
+    ic(f"Retrying... attempt {counter + 1}/{MAX_RETRIES}")
     if not data:
         raise HTTPException(
             status_code=503,
@@ -297,10 +310,10 @@ async def search_parts_broker_bin(
     return BrokerBinServerResponse(data=data["data"])
 
 
-@alru_cache(maxsize=128)
 async def multiple_parts_broker_bin_search(
     parts_list: list,
-    country: str | None,
+    countries: tuple | None,
+    regions: tuple | None,
     login_username: str = settings.BROKERUSER,
     authorization: str = settings.AUTHORIZATION,
 ):
@@ -308,7 +321,7 @@ async def multiple_parts_broker_bin_search(
     broker_response = []
     if len(parts_list) > 0:
         for part in parts_list:
-            query = InventoryPart(query=part)
+            query = InventoryPart(query=part, country=countries, region=regions)
             query_params.append(query)
         results = await asyncio.gather(
             *(

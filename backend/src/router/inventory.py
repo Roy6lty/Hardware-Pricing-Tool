@@ -1,4 +1,5 @@
 import logging
+from typing import List, Optional
 import httpx
 from fastapi import APIRouter, FastAPI
 
@@ -28,7 +29,6 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 host = "https://serach.brokerbin.com"
-router = FastAPI()
 router = APIRouter()  # Use APIRouter for better organization
 
 
@@ -45,12 +45,19 @@ BASE_URL = "https://partsurfer.hpe.com/Search.aspx"
     tags=["HPE Parts"],  # Optional tag for grouping in docs
 )
 async def get_broker_part(
-    db_conn: db_dependency, query: str, country: str, region: str
+    db_conn: db_dependency,
+    query: str,
+    countries: Optional[str] = None,
+    regions: Optional[str] = None,
 ):
     """
     API endpoint to fetch HPE part information.
     """
     # Search Local Database:
+    if countries:
+        countries = tuple(countries.split(","))
+    if regions:
+        regions = tuple(regions.split(","))
 
     result = await LocalInventoryService.get_computer_part_by_part_number(
         db_conn=db_conn, part_number=query
@@ -64,7 +71,7 @@ async def get_broker_part(
             product_parts.append(product)
         return PartsResponse(data=product_parts)
 
-    broker_query = InventoryPart(query=query, country=[country])
+    broker_query = InventoryPart(query=query, country=countries, region=regions)
 
     res = await search_parts_broker_bin(
         query=broker_query,
@@ -126,7 +133,8 @@ async def get_multiple_part_numbers(db_conn: db_dependency, items: PartNumbersMu
 
     res = await multiple_parts_broker_bin_search(
         parts_list=product_part_numbers,
-        country=items.country,
+        countries=items.countries,
+        regions=items.regions,
     )
 
     res.extend(product_parts)
@@ -156,7 +164,8 @@ async def get_multiple_part_numbers(db_conn: db_dependency, items: PartNumbersMu
     tags=["HPE Parts"],  # Optional tag for grouping in docs
 )
 async def get_model_description(
-    db_conn: db_dependency, query: str, country: str, region: str
+    db_conn: db_dependency,
+    query: str,
 ):
     """
     API endpoint to fetch HPE part information.

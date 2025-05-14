@@ -484,3 +484,58 @@
   width: 250px; /* Adjust as needed */
   font-size: 1.1em; /* Adjust as needed */
 }
+
+.filter-checkbox-group {
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid #f1f0f0;
+  border-radius: 4px;
+}
+
+.filter-checkbox-group h5 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 0.9em;
+  color: #555;
+}
+
+.checkbox-item {
+  display: flex; /* Aligns checkbox and label nicely */
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.checkbox-item input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.checkbox-item label {
+  font-size: 0.9em;
+}
+
+/* Optional: if you want checkbox groups side-by-side in filter-dropdown-group */
+.filter-dropdown-group {
+  display: flex;
+  flex-wrap: wrap; /* Allow wrapping if not enough space */
+  gap: 15px; /* Space between checkbox groups */
+}
+.country-filter,
+.region-filter,
+.independent-region-filter {
+  flex: 1; /* Distribute space, or set specific widths */
+  min-width: 200px; /* Minimum width before wrapping */
+}
+
+/* /home/olowoleru/projects/Inventory_tool/frontend/front/src/components/ui/SearchBar.css */
+
+/* ... other styles ... */
+
+.filter-dropdown-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  /* Add these properties to control overall height and enable scrolling */
+  max-height: 300px; /* Adjust this value as needed */
+  overflow-y: auto; /* Adds a scrollbar if content exceeds max-height */
+  padding-bottom: 10px; /* Ensures scrollbar doesn't overlap content too much */
+}

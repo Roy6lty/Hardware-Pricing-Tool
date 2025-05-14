@@ -11,7 +11,7 @@
   box-sizing: border-box; /* Ensures padding and border don't add to the total width/height */
 
   /* --- MODIFIED/ADDED --- */
-  height: 120px; /* Increased height (approx. current ~48-49px + 20px) */
+  height: 100x; /* Increased height (approx. current ~48-49px + 20px) */
 
   /* Flexbox for aligning content within the navbar */
   display: flex;
@@ -22,7 +22,7 @@
 
 .app-navbar h1 {
   margin: 0; /* Remove default browser margins from h1 */
-  font-size: 2.2em; /* Adjust font size as desired */
+  font-size: 2em; /* Adjust font size as desired */
   padding-left: 40px;
   color: #03297a;
   font-weight: 700;
@@ -32,7 +32,7 @@
 .secondary-header {
   margin: 0; /* Remove default browser margins from h1 */
   padding-left: 40px;
-  font-size: 1em; /* Adjust font size as desired */
+  font-size: 0.8em; /* Adjust font size as desired */
   color: #626263;
   font-weight: 400;
 }

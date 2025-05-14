@@ -7,51 +7,129 @@ import { useNavigate } from "react-router-dom";
 
 const SearchBar = () => {
   const [query, setQuery] = useState("");
-  const [selectedCountry, setSelectedCountry] = useState("");
-  const [selectedRegion, setSelectedRegion] = useState("");
+  const [selectedCountries, setSelectedCountries] = useState([]); // Changed from string to array
+  const [selectedCountrySpecificRegions, setSelectedCountrySpecificRegions] =
+    useState([]); // Changed from string to array
   const [searchMode, setSearchMode] = useState("model");
   const [searchResults, setSearchResults] = useState(null); // This will now hold the product_component array for model search, or the list of parts for partnumber search
   const [productDetails, setProductDetails] = useState(null); // NEW state for product details (used only in model search)
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedModelItems, setSelectedModelItems] = useState([]);
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // useNavigate is imported but not used. Consider removing if not planned for use.
+  const [selectedIndependentRegions, setSelectedIndependentRegions] = useState(
+    []
+  ); // Changed from string to array
+  const [modelSearchCriteria, setModelSearchCriteria] = useState(null); // To store filters used for the model search
+
+  // State for collapsible filter sections
+  const [isCountriesFilterOpen, setIsCountriesFilterOpen] = useState(false); // Changed to false
+  const [
+    isCountrySpecificRegionsFilterOpen,
+    setIsCountrySpecificRegionsFilterOpen, // Changed to false
+  ] = useState(false); // Set to false for consistency, collapsed by default
+  const [isIndependentRegionsFilterOpen, setIsIndependentRegionsFilterOpen] =
+    useState(false); // Changed to false
 
   const countries = [
-    { code: "USA", name: "United States" },
+    { code: "ARG", name: "Argentina" },
+    { code: "AUS", name: "Australia" },
+    { code: "AUT", name: "Austria" },
+    { code: "BRA", name: "Brazil" },
     { code: "CAN", name: "Canada" },
+    { code: "CHN", name: "China" },
+    { code: "COL", name: "Colombia" },
+    { code: "CZE", name: "Czech Republic" },
+    { code: "DNK", name: "Denmark" },
+    { code: "EGY", name: "Egypt" },
+    { code: "FRA", name: "France" },
+    { code: "DEU", name: "Germany" },
+    { code: "GRC", name: "Greece" },
+    { code: "HKG", name: "Hong Kong" },
+    { code: "HUN", name: "Hungary" },
+    { code: "IND", name: "India" },
+    { code: "IRL", name: "Ireland" },
+    { code: "ISR", name: "Israel" },
+    { code: "ITA", name: "Italy" },
+    { code: "JPN", name: "Japan" },
+    { code: "KOR", name: "South Korea" },
+    { code: "NGA", name: "Nigeria" },
+    { code: "MEX", name: "Mexico" },
+    { code: "NLD", name: "Netherlands" },
+    { code: "SAU", name: "Saudi Arabia" },
+    { code: "SGP", name: "Singapore" },
+    { code: "ZAF", name: "South Africa" },
+    { code: "SWE", name: "Sweden" },
+    { code: "CHE", name: "Switzerland" },
+    { code: "TUR", name: "Turkey" },
+    { code: "ARE", name: "United Arab Emirates" },
     { code: "GBR", name: "United Kingdom" },
+    { code: "USA", name: "United States" },
   ];
 
+  const independentRegions = [
+    { code: "Asia", name: "Asia" },
+    { code: "Europe", name: "Europe" },
+    { code: "North America", name: "North America" },
+    { code: "Middle East", name: "Middle East" },
+    { code: "Oceania", name: "Oceania" },
+  ];
+
+  // Define regionsByCountry - you'll need to populate this with your actual data
   const regionsByCountry = {
     USA: [
       { code: "CA", name: "California" },
       { code: "NY", name: "New York" },
       { code: "TX", name: "Texas" },
+      // ... other US states/regions
     ],
     CAN: [
       { code: "ON", name: "Ontario" },
       { code: "QC", name: "Quebec" },
+      { code: "BC", name: "British Columbia" },
+      // ... other Canadian provinces/regions
     ],
-    GBR: [
-      { code: "ENG", name: "England" },
-      { code: "SCT", name: "Scotland" },
-    ],
+    // ... add other countries and their regions as needed
   };
 
   const handleInputChange = (event) => {
     setQuery(event.target.value);
   };
 
-  const handleCountryChange = (event) => {
-    const countryCode = event.target.value;
-    setSelectedCountry(countryCode);
-    setSelectedRegion("");
+  const handleCountryToggle = (countryCode) => {
+    setSelectedCountries((prev) => {
+      const newSelectedCountries = prev.includes(countryCode)
+        ? prev.filter((c) => c !== countryCode)
+        : [...prev, countryCode];
+
+      // If more than one country or no country is selected, clear country-specific regions
+      if (newSelectedCountries.length !== 1) {
+        setSelectedCountrySpecificRegions([]);
+      }
+      return newSelectedCountries;
+    });
+    // If a country is selected/deselected, clear independent regions to enforce mutual exclusivity
+    setSelectedIndependentRegions([]);
   };
 
-  const handleRegionChange = (event) => {
-    const newRegion = event.target.value;
-    setSelectedRegion(newRegion);
+  const handleCountrySpecificRegionToggle = (regionCode) => {
+    setSelectedCountrySpecificRegions((prev) =>
+      prev.includes(regionCode)
+        ? prev.filter((r) => r !== regionCode)
+        : [...prev, regionCode]
+    );
+  };
+
+  const handleIndependentRegionToggle = (regionCode) => {
+    setSelectedIndependentRegions((prev) =>
+      prev.includes(regionCode)
+        ? prev.filter((r) => r !== regionCode)
+        : [...prev, regionCode]
+    );
+    // If an independent region is selected/deselected, clear countries and country-specific regions
+    // to enforce mutual exclusivity
+    setSelectedCountries([]);
+    setSelectedCountrySpecificRegions([]);
   };
 
   // Modified fetchData to handle different response structures based on searchMode
@@ -144,8 +222,9 @@ const SearchBar = () => {
 
   const fetchPartNumberData = async (
     currentQuery,
-    currentCountry,
-    currentRegion
+    currentCountries,
+    currentCountrySpecificRegions,
+    currentIndependentRegions
   ) => {
     const trimmedQuery = currentQuery.trim();
     if (!trimmedQuery) {
@@ -155,19 +234,32 @@ const SearchBar = () => {
       setIsLoading(false);
       return;
     }
-    setSelectedModelItems([]); // Clear selected items for model search
-    const endpoint = `http://134.209.22.147:8005/part-number?query=${encodeURIComponent(
+
+    setSelectedModelItems([]);
+    let endpoint = `http://134.209.22.147:8005/part-number?query=${encodeURIComponent(
       trimmedQuery
-    )}&country=${encodeURIComponent(
-      currentCountry || ""
-    )}&region=${encodeURIComponent(currentRegion || "")}`;
+    )}`;
+
+    if (currentCountries.length > 0) {
+      endpoint += `&countries=${encodeURIComponent(
+        currentCountries.join(",")
+      )}`;
+    }
+
+    if (currentIndependentRegions.length > 0) {
+      endpoint += `&regions=${encodeURIComponent(
+        currentIndependentRegions.join(",")
+      )}`;
+    }
+
     fetchData(endpoint, "part number data");
   };
 
   const fetchModelData = async (
     currentQuery,
-    currentCountry,
-    currentRegion
+    currentCountries,
+    currentCountrySpecificRegions,
+    currentIndependentRegions // Added for consistency, assuming backend supports it
   ) => {
     const trimmedQuery = currentQuery.trim();
     if (!trimmedQuery) {
@@ -177,12 +269,18 @@ const SearchBar = () => {
       setIsLoading(false);
       return;
     }
+    // Store the criteria used for this model search
+    setModelSearchCriteria({
+      countries: currentCountries,
+      countrySpecificRegions: currentCountrySpecificRegions,
+      independentRegions: currentIndependentRegions,
+    });
+
     setSelectedModelItems([]); // Clear selected items for model search
-    const endpoint = `http://134.209.22.147:8005/model?query=${encodeURIComponent(
+    let endpoint = `http://134.209.22.147:8005/model?query=${encodeURIComponent(
       trimmedQuery
-    )}&country=${encodeURIComponent(
-      currentCountry || ""
-    )}&region=${encodeURIComponent(currentRegion || "")}`;
+    )}`;
+
     fetchData(endpoint, "model data");
   };
 
@@ -193,6 +291,10 @@ const SearchBar = () => {
     setProductDetails(null); // Clear product details when changing mode
     setIsLoading(false);
     setSelectedModelItems([]); // Clear selected items
+    setSelectedCountries([]);
+    setSelectedCountrySpecificRegions([]);
+    setSelectedIndependentRegions([]);
+    setModelSearchCriteria(null); // Clear stored model search criteria
   };
 
   const handleSearch = () => {
@@ -210,9 +312,19 @@ const SearchBar = () => {
     }
 
     if (searchMode === "partnumber") {
-      fetchPartNumberData(trimmedQuery, selectedCountry, selectedRegion);
+      fetchPartNumberData(
+        trimmedQuery,
+        selectedCountries,
+        selectedCountrySpecificRegions,
+        selectedIndependentRegions
+      );
     } else if (searchMode === "model") {
-      fetchModelData(trimmedQuery, selectedCountry, selectedRegion);
+      fetchModelData(
+        trimmedQuery,
+        selectedCountries,
+        selectedCountrySpecificRegions,
+        selectedIndependentRegions
+      );
     }
   };
 
@@ -222,18 +334,25 @@ const SearchBar = () => {
   };
 
   const getCountryName = (code) => {
-    if (!code) return "All";
+    if (!code) return ""; // Return empty or some placeholder if needed for multiple
     const country = countries.find((c) => c.code === code);
     return country ? country.name : code;
   };
 
   const getRegionName = (countryCode, regionCode) => {
-    if (!regionCode) return "All";
-    if (!countryCode || !regionsByCountry[countryCode]) return regionCode;
-    const region = regionsByCountry[countryCode].find(
+    // This function might need adjustment if used to display multiple selected regions
+    if (!regionCode) return "";
+    if (countryCode && regionsByCountry[countryCode]) {
+      const region = regionsByCountry[countryCode].find(
+        (r) => r.code === regionCode
+      );
+      return region ? region.name : regionCode;
+    }
+    // For independent regions or if countryCode is not singular
+    const independentRegion = independentRegions.find(
       (r) => r.code === regionCode
     );
-    return region ? region.name : regionCode;
+    return independentRegion ? independentRegion.name : regionCode;
   };
 
   const handleModelItemToggle = (item) => {
@@ -261,11 +380,20 @@ const SearchBar = () => {
     setError(null);
 
     try {
+      const criteriaToUse = modelSearchCriteria || {
+        countries: selectedCountries, // Fallback to current if modelSearchCriteria is somehow null
+        countrySpecificRegions: selectedCountrySpecificRegions,
+        independentRegions: selectedIndependentRegions,
+      };
+
       const endpoint = "http://134.209.22.147:8005/part-number/multiple";
       const postData = {
         part_numbers: selectedModelItems.map((item) => item.part_number),
-        country: selectedCountry || "",
-        region: selectedRegion || "",
+        countries: criteriaToUse.countries,
+        regions: [
+          ...(criteriaToUse.independentRegions || []),
+          ...(criteriaToUse.countrySpecificRegions || []),
+        ],
       };
 
       const response = await axios.post(endpoint, postData);
@@ -414,35 +542,103 @@ const SearchBar = () => {
 
       {/* ... Filter Dropdown Group ... */}
       <div className="filter-dropdown-group">
-        <select
-          className="filter-dropdown country-dropdown"
-          value={selectedCountry}
-          onChange={handleCountryChange}
-        >
-          <option value="">Select Country (All)</option>
-          {countries.map((country) => (
-            <option key={country.code} value={country.code}>
-              {country.name}
-            </option>
-          ))}
-        </select>
+        {/* Country Checkboxes */}
+        <div className="filter-checkbox-group country-filter">
+          <h5
+            onClick={() => setIsCountriesFilterOpen(!isCountriesFilterOpen)}
+            className="filter-group-header"
+          >
+            Countries {isCountriesFilterOpen ? "[-]" : "[+]"}
+          </h5>
+          {isCountriesFilterOpen && (
+            <>
+              {countries.map((country) => (
+                <div key={country.code} className="checkbox-item">
+                  <input
+                    type="checkbox"
+                    id={`country-${country.code}`}
+                    checked={selectedCountries.includes(country.code)}
+                    onChange={() => handleCountryToggle(country.code)}
+                  />
+                  <label htmlFor={`country-${country.code}`}>
+                    {country.name}
+                  </label>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
 
-        <select
-          className="filter-dropdown region-dropdown"
-          value={selectedRegion}
-          onChange={handleRegionChange}
-          disabled={
-            !selectedCountry || !regionsByCountry[selectedCountry]?.length
-          }
-        >
-          <option value="">Select Region (All)</option>
-          {selectedCountry &&
-            regionsByCountry[selectedCountry]?.map((region) => (
-              <option key={region.code} value={region.code}>
-                {region.name}
-              </option>
-            ))}
-        </select>
+        {/* Country-Specific Region Checkboxes (Conditional) */}
+        {selectedCountries.length === 1 &&
+          regionsByCountry[selectedCountries[0]] && (
+            <div className="filter-checkbox-group region-filter">
+              <h5
+                onClick={() =>
+                  setIsCountrySpecificRegionsFilterOpen(
+                    !isCountrySpecificRegionsFilterOpen
+                  )
+                }
+                className="filter-group-header"
+              >
+                Regions for {getCountryName(selectedCountries[0])}{" "}
+                {isCountrySpecificRegionsFilterOpen ? "[-]" : "[+]"}
+              </h5>
+              {isCountrySpecificRegionsFilterOpen && (
+                <>
+                  {(regionsByCountry[selectedCountries[0]] || []).map(
+                    (region) => (
+                      <div key={region.code} className="checkbox-item">
+                        <input
+                          type="checkbox"
+                          id={`country-region-${region.code}`}
+                          checked={selectedCountrySpecificRegions.includes(
+                            region.code
+                          )}
+                          onChange={() =>
+                            handleCountrySpecificRegionToggle(region.code)
+                          }
+                        />
+                        <label htmlFor={`country-region-${region.code}`}>
+                          {region.name}
+                        </label>
+                      </div>
+                    )
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+        {/* Independent Region Checkboxes */}
+        <div className="filter-checkbox-group independent-region-filter">
+          <h5
+            onClick={() =>
+              setIsIndependentRegionsFilterOpen(!isIndependentRegionsFilterOpen)
+            }
+            className="filter-group-header"
+          >
+            Regions {isIndependentRegionsFilterOpen ? "[-]" : "[+]"}{" "}
+            {/* Title changed here */}
+          </h5>
+          {isIndependentRegionsFilterOpen && (
+            <>
+              {independentRegions.map((region) => (
+                <div key={region.code} className="checkbox-item">
+                  <input
+                    type="checkbox"
+                    id={`ind-region-${region.code}`}
+                    checked={selectedIndependentRegions.includes(region.code)}
+                    onChange={() => handleIndependentRegionToggle(region.code)}
+                  />
+                  <label htmlFor={`ind-region-${region.code}`}>
+                    {region.name}
+                  </label>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
       </div>
 
       {/* --- Feedback Messages --- */}
