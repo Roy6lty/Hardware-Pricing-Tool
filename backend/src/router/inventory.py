@@ -24,7 +24,6 @@ from backend.src.services.hpe_services import (
     multiple_parts_broker_bin_search,
     search_parts_broker_bin,
 )
-from backend.src.models.inventory_model import HPE_obj
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
