@@ -1,18 +1,21 @@
 import asyncio
+import uuid
 
 from async_lru import alru_cache
 from bs4 import BeautifulSoup
 from fastapi import HTTPException
-import httpx
 import logging
-from icecream import ic
+from numpy import average
 from backend.src.models.inventory_model import (
     BrokerBinServerResponse,
     HPEPartsModel,
     HPEProductsDescription,
     InventoryPart,
+    MultipleBrokenbinPartResponse,
 )
+import httpx
 from backend.src.root.settings import settings
+from icecream import ic
 
 # Configure basic logging to see output in the console
 logging.basicConfig(
@@ -170,6 +173,7 @@ def parse_specific_rtf_table(html_content: str):
     return product_info, product_components
 
 
+############------------- Services--------------------------------------->
 @alru_cache(maxsize=128)
 async def get_hpe_part_info(part_id: str, max_retries: int = 5):
     """
@@ -246,6 +250,61 @@ async def get_hpe_part_info(part_id: str, max_retries: int = 5):
         )
 
 
+# <--------------------- Helper function Calculate Average --------------->
+def _calculate_median_recursive(sorted_data: list[dict], key: str):
+    """
+    Recursive helper to calculate median from pre-sorted data.
+    Assumes sorted_data is sorted by 'key'.
+    """
+    if not sorted_data:  # Base case for recursion if list becomes empty
+        return None
+
+    if len(sorted_data) == 1:
+        return sorted_data[0]  # return median part even if the price is zero
+
+    n = len(sorted_data)
+
+    if n % 2 == 1:  # Odd number of elements
+        median_element = sorted_data[n // 2]
+        if median_element.get(key, 0) <= 0:
+            return _calculate_median_recursive(sorted_data[n // 2 + 1 :], key)
+        return median_element
+    else:  # Even number of elements (n >= 2)
+        mid1_idx = n // 2 - 1
+        mid2_idx = n // 2
+
+        mid1_element = sorted_data[mid1_idx]
+        mid2_element = sorted_data[mid2_idx]
+
+        mid1_price = mid1_element.get(key, 0)
+        mid2_price = mid2_element.get(key, 0)
+
+        # If either of the elements that would form the median has a non-positive price,
+        # we discard the lower half (including mid1) and try to find a median in the upper half.
+        if mid1_price <= 0 or mid2_price <= 0:
+
+            return _calculate_median_recursive(sorted_data[mid2_idx:], key)
+        else:
+            return mid2_element
+
+
+def calculate_median_of_brokerbin_part(data: list[dict], key: str = "price"):
+    """
+    Calculates the median item from a list of dictionaries based on a specified price key.
+    If the calculated median price is non-positive, it recursively attempts to find a median
+    from the upper portion of the price-sorted data.
+    Returns a dictionary item from the list (for odd counts) or a new dictionary
+    with the average price for the specified key (for even counts), or None if no suitable median is found.
+    """
+    if not data:  # Handles empty list before sorting
+        return None
+
+    sorted_initial_data = sorted(
+        data, key=lambda x: x.get(key, 0) if isinstance(x.get(key), (int, float)) else 0
+    )
+    return _calculate_median_recursive(sorted_initial_data, key)
+
+
 @alru_cache(maxsize=128)
 async def search_parts_broker_bin(
     query: InventoryPart, authorization: str, login_username: str, max_retires: int = 5
@@ -259,7 +318,7 @@ async def search_parts_broker_bin(
         "country[]": list(query.country) if query.country else None,
         "region[]": list(query.region) if query.region else None,
         "state[]": list(query.state) if query.state else None,
-        "size": 100,
+        "size": query.size,
     }
     filtered_params = {key: value for key, value in params.items() if value is not None}
     headers = {
@@ -307,7 +366,15 @@ async def search_parts_broker_bin(
             status_code=503,
             detail=f"API HTTP Error: 503 - unable to reach {host}",
         )
-    return BrokerBinServerResponse(data=data["data"])
+
+    # median part cost
+    median_part = calculate_median_of_brokerbin_part(data=data["data"])
+    median_price = 0
+    if median_part:
+        median_price = median_part.get("price", 0)
+    return BrokerBinServerResponse(
+        data=data["data"], average_cost=median_price, median_part=median_part
+    )
 
 
 async def multiple_parts_broker_bin_search(
@@ -319,6 +386,8 @@ async def multiple_parts_broker_bin_search(
 ):
     query_params = []
     broker_response = []
+    median_part = []
+    total_cost = 0
     if len(parts_list) > 0:
         for part in parts_list:
             query = InventoryPart(query=part, country=countries, region=regions)
@@ -340,4 +409,11 @@ async def multiple_parts_broker_bin_search(
             else:
                 if len(result.data) > 0:
                     broker_response.extend(result.data)
-    return broker_response
+                    median_part.append(result.median_part)
+                    if result.median_part:
+                        total_cost += result.median_part.get("price", 0)
+
+    result = MultipleBrokenbinPartResponse(
+        data=broker_response, median_part=median_part, total_cost=total_cost
+    )
+    return result

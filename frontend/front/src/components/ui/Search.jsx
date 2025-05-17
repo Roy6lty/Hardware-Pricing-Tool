@@ -145,7 +145,6 @@ const SearchBar = () => {
 
       if (searchMode === "model") {
         // Expecting { product_details: {...}, product_component: [...] }
-        console.log("Model Search API Response:", responseBody); // Log for debugging
         if (
           responseBody &&
           responseBody.product_details &&
@@ -174,7 +173,6 @@ const SearchBar = () => {
       } else {
         // searchMode === "partnumber"
         // Expecting { data: [...] } or just [...]
-        console.log("Part Number Search API Response:", responseBody); // Log for debugging
         let itemsArray = null;
         if (responseBody && Array.isArray(responseBody.data)) {
           itemsArray = responseBody.data;
@@ -258,8 +256,8 @@ const SearchBar = () => {
   const fetchModelData = async (
     currentQuery,
     currentCountries,
-    currentCountrySpecificRegions,
-    currentIndependentRegions // Added for consistency, assuming backend supports it
+    currentCountrySpecificRegions, // Parameter for country-specific regions
+    currentIndependentRegions // Parameter for independent regions
   ) => {
     const trimmedQuery = currentQuery.trim();
     if (!trimmedQuery) {
@@ -280,6 +278,26 @@ const SearchBar = () => {
     let endpoint = `http://134.209.22.147:8005/model?query=${encodeURIComponent(
       trimmedQuery
     )}`;
+
+    // Append countries if any are selected
+    if (currentCountries.length > 0) {
+      endpoint += `&countries=${encodeURIComponent(
+        currentCountries.join(",")
+      )}`;
+    }
+
+    // Combine country-specific and independent regions
+    const allSelectedRegions = [
+      ...(currentCountrySpecificRegions || []),
+      ...(currentIndependentRegions || []),
+    ];
+
+    // Append regions if any are selected
+    if (allSelectedRegions.length > 0) {
+      endpoint += `&regions=${encodeURIComponent(
+        allSelectedRegions.join(",")
+      )}`;
+    }
 
     fetchData(endpoint, "model data");
   };
@@ -399,9 +417,6 @@ const SearchBar = () => {
       const response = await axios.post(endpoint, postData);
       const responseBody = response.data; // Use responseBody for clarity
 
-      // Crucial: Log the actual response from the API
-      console.log("API response for /part-number/multiple:", responseBody);
-
       let itemsToProcess = null;
 
       // Check if the array is directly in responseBody or nested (e.g., responseBody.data)
@@ -420,6 +435,11 @@ const SearchBar = () => {
       }
 
       if (itemsToProcess) {
+        if (!itemsToProcess || itemsToProcess.length === 0) {
+          console.warn(
+            "[Search.jsx] itemsToProcess is empty or null. No data will be stored for the new tab."
+          );
+        }
         const formattedItems = itemsToProcess.map((item) => ({
           // Ensure these keys match the PartResponse model in the backend
           part_number: item.part_number || "N/A",
@@ -434,21 +454,44 @@ const SearchBar = () => {
           quantity: item.quantity,
         }));
 
-        const url = `/selected-parts?items=${encodeURIComponent(
-          JSON.stringify(formattedItems)
-        )}`;
+        if (!formattedItems || formattedItems.length === 0) {
+          console.warn(
+            "[Search.jsx] formattedItems is empty or null after mapping. This will likely lead to 'No items' in the new tab if data is '[]'."
+          );
+        }
+        const stringifiedData = JSON.stringify(formattedItems);
 
-        // Attempt to open the new window
-        const newWindow = window.open(url, "_blank");
+        // Generate a unique key for sessionStorage
+        const dataKey = `selectedPartsData_${Date.now()}`;
+        try {
+          // 2. Store the data in sessionStorage
+          // Note: sessionStorage has its own size limits, but they are much larger than URL limits (typically 5-10MB)
+          sessionStorage.setItem(dataKey, stringifiedData);
 
-        // Check if the window was blocked
-        if (
-          !newWindow ||
-          newWindow.closed ||
-          typeof newWindow.closed === "undefined"
-        ) {
+          // 3. Construct the URL with only the key
+          const url = `/selected-parts?dataKey=${dataKey}`;
+
+          // 4. Attempt to open the new window
+          const newWindow = window.open(url, "_blank");
+
+          // Check if the window was blocked
+          if (
+            !newWindow ||
+            newWindow.closed ||
+            typeof newWindow.closed === "undefined"
+          ) {
+            setError(
+              "Could not open new window. Please disable your pop-up blocker for this site and try again."
+            );
+            // If window opening fails, consider removing the item from sessionStorage
+            // to prevent orphaned data, though it will clear on session end anyway.
+            // For now, we'll let SelectedPartsPage handle removal on successful read.
+            // sessionStorage.removeItem(dataKey);
+          }
+        } catch (storageError) {
+          console.error("Error saving data to sessionStorage:", storageError);
           setError(
-            "Could not open new window. Please disable your pop-up blocker for this site and try again."
+            "Could not prepare data for the new page. Session storage might be full or disabled."
           );
         }
       } else {
@@ -673,6 +716,25 @@ const SearchBar = () => {
                 <strong>Product Description:</strong>{" "}
                 {productDetails.product_description || "N/A"}
               </p>
+              <p>
+                <strong>Market Price:</strong>{" "}
+                {productDetails.product_average_cost ? (
+                  <span
+                    style={{
+                      color: "green",
+                      fontSize: "1.2em", // Increased font size
+                      fontWeight: "bold",
+                    }}
+                  >
+                    $
+                    {typeof productDetails.product_average_cost === "number"
+                      ? productDetails.product_average_cost.toFixed(2)
+                      : productDetails.product_average_cost}
+                  </span>
+                ) : (
+                  "N/A"
+                )}
+              </p>
             </div>
           )}
           {/* --- Table Container --- */}
@@ -694,7 +756,11 @@ const SearchBar = () => {
                           <th>Select</th>
                           <th>Part Number</th>
                           <th>Description</th>
-                          <th>Tech Courier</th>
+                          <th>Country</th>
+                          <th>Condition</th>
+                          <th>Price</th>
+                          <th>Manufacturer</th>
+                          <th>Quantity</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -717,7 +783,16 @@ const SearchBar = () => {
                               {item.part_number}
                             </td>
                             <td>{item.description}</td>
-                            <td>{item.tech_courier}</td>
+                            {/* Display tech_courier */}
+                            <td>{item.country}</td>
+                            <td>{item.condition}</td>
+                            <td>
+                              {typeof item.price === "number"
+                                ? `$${item.price.toFixed(2)}`
+                                : item.price}
+                            </td>
+                            <td>{item.manufacturer}</td>
+                            <td>{item.quantity}</td>
                           </tr>
                         ))}
                       </tbody>

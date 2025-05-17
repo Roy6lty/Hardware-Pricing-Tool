@@ -7,6 +7,7 @@ from backend.src.database.handlers.inventory_parts import (
     LocalInventoryService,
 )
 from backend.src.models.inventory_model import (
+    CountriesRegionsModel,
     HPEProductsDescription,
     InventoryPart,
     ModelSearchResponse,
@@ -131,15 +132,16 @@ async def get_multiple_part_numbers(db_conn: db_dependency, items: PartNumbersMu
         else:
             product_part_numbers = parts_number_not_found
 
-    res = await multiple_parts_broker_bin_search(
+    multiple_responses = await multiple_parts_broker_bin_search(
         parts_list=product_part_numbers,
         countries=items.countries,
         regions=items.regions,
     )
+    result_data = multiple_responses.data
 
-    res.extend(product_parts)
+    result_data.extend(product_parts)
     final = []
-    for part in res:
+    for part in result_data:
         part_model = PartResponse(
             price=part.get("price"),
             part_number=part.get("part"),
@@ -166,10 +168,13 @@ async def get_multiple_part_numbers(db_conn: db_dependency, items: PartNumbersMu
 async def get_model_description(
     db_conn: db_dependency,
     query: str,
+    countries: Optional[str] = None,
+    regions: Optional[str] = None,
 ):
     """
     API endpoint to fetch HPE part information.
     """
+    print(countries, regions)
     # Search Local Database:
     result = await LocalInventoryService.get_computer_part_by_name_fuzzy_search(
         db_conn=db_conn, part_name=query
@@ -193,6 +198,7 @@ async def get_model_description(
     logger.info(f"Successfully received data for {query}.")
     # product_component = HPE_obj
     product_component_list = []
+    part_number_list = []
     for part_number, description, tec_courier in zip(
         product_component.part_number,
         product_component.part_description,
@@ -205,8 +211,36 @@ async def get_model_description(
                 tech_courier=tec_courier,
             )
         )
+        part_number_list.append(part_number)
+
+    # Search Local Database:
+    query_params = CountriesRegionsModel(countries=countries, regions=regions)
+
+    # find the Average Market Value
+    multiple_responses = await multiple_parts_broker_bin_search(
+        parts_list=part_number_list,
+        countries=query_params.countries,
+        regions=query_params.regions,
+    )
+    product_info.product_average_cost = multiple_responses.total_cost
+
+    final_response = []
+    for part in multiple_responses.median_part:
+        part_model = PartResponse(
+            price=part.get("price", 0),
+            part_number=part.get("part", "N/A"),
+            description=part.get("description", "N/A"),
+            country=part.get("country", "N/A"),
+            company=part.get("company", "N/A"),
+            condition=part.get("cond", " N/A"),
+            age=part.get("age_in_days", "N/A"),
+            manufacturer=part.get("mfg", "N/A"),
+        )
+        final_response.append(part_model)
+
     return ModelSearchResponse(
-        product_details=product_info, product_component=product_component_list
+        product_details=product_info,
+        product_component=final_response,
     )
 
 
